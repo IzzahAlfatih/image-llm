@@ -1,0 +1,11 @@
+.env
+imllm
+imllm/
+__pycache__/
+**/__pycache__/
+
+dataset_bisindo_letters/
+gambar/
+dataset_bisindo_letters.zip
+
+*.xlsx
