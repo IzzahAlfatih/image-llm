@@ -1,6 +1,6 @@
 import os
 import argparse
-# import openai
+from openai import OpenAI
 import requests
 import pandas as pd
 import base64
@@ -15,6 +15,36 @@ load_dotenv()
 OLLAMA_URL = os.getenv("OLLAMA_URL")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+prompt = """
+You are a sign‐language recognition system specialized in BISINDO (Bahasa Isyarat Indonesia). BISINDO uses hand gestures, facial expressions, and body movements to convey letters and words, similar to other sign languages.
+
+=== Task ===
+Given exactly one input image showing a single BISINDO gesture, output **only** the corresponding character (A–Z) or word (e.g., “SAYA”, “MAKAN”) that the sign represents. Do **not** output any other text, punctuation, or explanation.
+
+=== Input Format ===
+- A single image file (e.g., JPEG, PNG) clearly showing one hand sign.
+- No captions, no additional metadata.
+
+=== Output Format ===
+- **One token/word only**: the exact letter (uppercase A–Z) or the exact uppercase word from the BISINDO lexicon.
+- **No** spaces, no punctuation, no newline characters before or after.
+- Example: `B`, `L`, `SAYA`, `TERIMA`
+- DO NOT ADD ANYTHING OTHER THAN THE ANSWER
+
+=== Constraints ===
+1. If uncertain, return your **best guess** with the same strict format.  
+2. Do **not** say “I think,” “maybe,” or include any qualifiers.  
+3. Do **not** output JSON, XML, lists, or any markup.  
+
+=== Examples ===  
+- Input: image_of_BISINDO_sign_for_L.png  
+  Output: 'L'  
+- Input: image_of_BISINDO_sign_for_MAKAN.png
+  Output: 'MAKAN'  
+
+Process the image and return only the predicted BISINDO character or word.  
+"""
+
 def gather_image_paths(image_folder: str) -> list:
     """
     Collects all image file paths under the root folder.
@@ -27,7 +57,30 @@ def gather_image_paths(image_folder: str) -> list:
     return img_paths
 
 def send_to_openai(image_path: str, model: str) -> str:
-    return print("belum jadi, malas ngoding")
+    with open(image_path, "rb") as f:
+        b64_str = base64.b64encode(f.read()).decode('utf-8')
+
+    client = OpenAI(api_key=OPENAI_API_KEY)
+
+    response = client.responses.create(
+        model = model,
+        store = False,
+        input = [
+            {
+                "role":"user",
+                "content": [
+                    { "type": "input_text", "text": prompt },
+                    {
+                        "type": "input_image",
+                        "image_url": f"data:image/png;base64,{b64_str}",
+                        "detail": "low"
+                    },
+                ],
+            }
+        ],
+    )
+
+    return response.output_text
 
 def send_to_ollama(image_path: str, model: str) -> str:
     """
@@ -40,7 +93,7 @@ def send_to_ollama(image_path: str, model: str) -> str:
 
     payload = {
         "model": model,
-        "prompt": "Identify the meaning of this sign language image. This is BISINDO sign language. Answer with the answer ONLY, just 'A', 'B', 'E', 'eat', 'sit', etc . DO NOT ADD ANY INFORMATION",
+        "prompt": prompt,
         "images": [b64_str],
         "stream": False
     }
@@ -75,7 +128,6 @@ def process_images(image_folder: str, provider: str, model: str) -> pd.DataFrame
         print(f"Processing {idx}/{total}: {image_path}")
         if provider.lower() == 'openai':
             prediction = send_to_openai(image_path, model)
-            break
         elif provider.lower() == 'ollama':
             prediction = send_to_ollama(image_path, model)
         else:
