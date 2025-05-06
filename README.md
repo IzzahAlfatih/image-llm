@@ -55,4 +55,4 @@ python predict.py --image-folder dataset_bisindo_letters --llm-provider ollama -
 
 ## TODO
 - [x] Add support for other providers
-- [] Add token calculations for pricing
+- [ ] Add token calculations for pricing
