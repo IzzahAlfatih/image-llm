@@ -80,7 +80,11 @@ def send_to_openai(image_path: str, model: str) -> str:
         ],
     )
 
-    return response.output_text
+    prediction = response.output_text
+    input_tokens = response.usage.input_tokens
+    output_tokens = response.usage.output_tokens
+
+    return prediction, input_tokens, output_tokens
 
 def send_to_ollama(image_path: str, model: str) -> str:
     """
@@ -123,11 +127,13 @@ def process_images(image_folder: str, provider: str, model: str, output_file: st
     img_paths = gather_image_paths(image_folder)
     total = len(img_paths)
     results = []
+    total_input = 0
+    total_output = 0
 
     for idx, image_path in enumerate(img_paths, start=1):
         print(f"Processing {idx}/{total}: {image_path}")
         if provider.lower() == 'openai':
-            prediction = send_to_openai(image_path, model)
+            prediction, input_tokens, output_tokens = send_to_openai(image_path, model)
         elif provider.lower() == 'ollama':
             prediction = send_to_ollama(image_path, model)
         else:
@@ -135,10 +141,18 @@ def process_images(image_folder: str, provider: str, model: str, output_file: st
 
         results.append({"image_path": image_path, "prediction": prediction})
 
+        total_input += input_tokens
+        total_output += output_tokens
+
         # Save every `save_interval` images, and also at the end. Default = 10.
         if idx % save_interval == 0 or idx == total:
             pd.DataFrame(results).to_excel(output_file, index=False)
             print(f"Saved progress to {output_file} at image {idx}")
+        
+        # Print number of token used every 'token_interval' images. Default = 100
+        token_interval = 50
+        if idx % token_interval == 0 or idx == total:
+            print(f"Total tokens used so far {total_input} for input & {total_output} for output. Total: {total_input + total_output}")
 
     return pd.DataFrame(results)
 
