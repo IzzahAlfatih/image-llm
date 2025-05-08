@@ -15,8 +15,6 @@ Projects
 │   └── c
 │       └── 1.jpeg
 │
-├── hasil.xlsx
-├── ollama-api.py
 └── predict.py
 └── .env
 ```
