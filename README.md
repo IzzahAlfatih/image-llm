@@ -6,7 +6,7 @@ Script for LLM image inference
 ### Directory Structure
 To make sure it's working properly, please structure your project following this tree
 ```
-Projects
+image-llm
 ├── dataset_bisindo_letters
 │   ├── a
 │   │   └── 1.png
@@ -53,4 +53,4 @@ python predict.py --image-folder dataset_bisindo_letters --llm-provider ollama -
 
 ## TODO
 - [x] Add support for other providers
-- [ ] Add token calculations for pricing
+- [x] Add token calculations for pricing
