@@ -50,7 +50,3 @@ Example:
 ```bash
 python predict.py --image-folder dataset_bisindo_letters --llm-provider ollama --model llama3.2-vision:11b-instruct-fp16 --output-file hasil.xlsx
 ```
-
-## TODO
-- [x] Add support for other providers
-- [x] Add token calculations for pricing
