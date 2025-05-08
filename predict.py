@@ -115,7 +115,7 @@ def send_to_ollama(image_path: str, model: str) -> str:
     
     
 
-def process_images(image_folder: str, provider: str, model: str) -> pd.DataFrame:
+def process_images(image_folder: str, provider: str, model: str, output_file: str, save_interval: int = 10) -> pd.DataFrame:
     """
     Walk through the image_folder, send each image to the specified LLM provider,
     and collect predictions in a DataFrame with progress printing.
@@ -134,6 +134,11 @@ def process_images(image_folder: str, provider: str, model: str) -> pd.DataFrame
             prediction = f"[Error] Unknown provider: {provider}"
 
         results.append({"image_path": image_path, "prediction": prediction})
+
+        # Save every `save_interval` images, and also at the end. Default = 10.
+        if idx % save_interval == 0 or idx == total:
+            pd.DataFrame(results).to_excel(output_file, index=False)
+            print(f"Saved progress to {output_file} at image {idx}")
 
     return pd.DataFrame(results)
 
@@ -158,12 +163,16 @@ def main():
         "--output-file", required=True,
         help="Path to save the output Excel file"
     )
+    parser.add_argument(
+        "--save-interval", type=int, default=10,
+        help="Save progress every N images (default 10)"
+    )
     args = parser.parse_args()
 
     if args.llm_provider.lower() == 'openai' and not os.getenv("OPENAI_API_KEY"):
         raise EnvironmentError("OPENAI_API_KEY not set in environment.")
     
-    df = process_images(args.image_folder, args.llm_provider, args.model)
+    df = process_images(args.image_folder, args.llm_provider, args.model, args.output_file, args.save_interval)
     df.to_excel(args.output_file, index=False)
     print(f"Results saved to {args.output_file}")
 
