@@ -148,7 +148,7 @@ def send_to_openai(image_path: str, model: str, kshot=True) -> str:
                     "role":"assistant",
                     "content": "D"
                 },
-                {
+                {   # USER INPUT
                     "role":"user",
                     "content": [
                         { "type": "input_text", "text": prompt },
