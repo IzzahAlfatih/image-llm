@@ -55,6 +55,41 @@ python predict.py --image-folder dataset_bisindo_letters --llm-provider ollama -
 python predict.py --image-folder dataset_bisindo_letters --llm-provider openai --model gpt-4.1-nano --output-file hasil.xlsx --save-interval 10
 ```
 
+**k-shot:**
+
+To use k-shot method change `kshot=True`
+```python
+def send_to_openai(image_path: str, model: str, kshot=True) -> str:
+```
+By default, the k-shot method use 3 words namely A, B, and C. You can check it in this code snippet:
+```python
+if kshot:
+    response = client.responses.create(
+        model = model,
+        store = False,
+        input = [
+            {
+                "role":"system",
+                "content": system_prompt
+            },
+            {
+                "role":"user",
+                "content": [
+                    { "type": "input_text", "text": prompt },
+                    {
+                        "type": "input_image",
+                        "image_url": f"data:image/png;base64,{b64_str_a}",
+                        "detail": "low"
+                    },
+                ],
+            },
+            {
+                "role":"assistant",
+                "content": "A"
+            },
+            ...
+```
+
 ### Model Availabilities
 #### OpenAI
 For OpenAI models, refer to this documentation: https://platform.openai.com/docs/models

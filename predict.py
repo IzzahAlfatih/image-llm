@@ -15,11 +15,11 @@ load_dotenv()
 OLLAMA_URL = os.getenv("OLLAMA_URL")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-prompt = """
+system_prompt = """
 You are a sign‐language recognition system specialized in BISINDO (Bahasa Isyarat Indonesia). BISINDO uses hand gestures, facial expressions, and body movements to convey letters and words, similar to other sign languages.
 
 === Task ===
-Given exactly one input image showing a single BISINDO gesture, output **only** the corresponding character (A–Z) or word (e.g., “SAYA”, “MAKAN”) that the sign represents. Do **not** output any other text, punctuation, or explanation.
+Given exactly one input image showing a single BISINDO gesture, output **only** the corresponding character (A–Z) that the sign represents. Do **not** output any other text, punctuation, or explanation.
 
 === Input Format ===
 - A single image file (e.g., JPEG, PNG) clearly showing one hand sign.
@@ -28,7 +28,7 @@ Given exactly one input image showing a single BISINDO gesture, output **only** 
 === Output Format ===
 - **One token/word only**: the exact letter (uppercase A–Z) or the exact uppercase word from the BISINDO lexicon.
 - **No** spaces, no punctuation, no newline characters before or after.
-- Example: `B`, `L`, `SAYA`, `TERIMA`
+- Example: 'A', 'B', 'C', 'L', etc.
 - DO NOT ADD ANYTHING OTHER THAN THE ANSWER
 
 === Constraints ===
@@ -39,10 +39,15 @@ Given exactly one input image showing a single BISINDO gesture, output **only** 
 === Examples ===  
 - Input: image_of_BISINDO_sign_for_L.png  
   Output: 'L'  
-- Input: image_of_BISINDO_sign_for_MAKAN.png
-  Output: 'MAKAN'  
+- Input: image_of_BISINDO_sign_for_A.png
+  Output: 'A'  
 
 Process the image and return only the predicted BISINDO character or word.  
+**DO NOT GENERATE ANY IMAGE FOR THE OUTPUT. ONLY TEXT.**
+"""
+
+prompt = """
+Huruf apa ini di BISINDO?
 """
 
 def gather_image_paths(image_folder: str) -> list:
@@ -68,6 +73,9 @@ def send_to_openai(image_path: str, model: str, kshot=True) -> str:
     
     with open("/home/izzahalfatih/belajar/image-llm/dataset_bisindo_letters/C/1.png", "rb") as f:
         b64_str_c = base64.b64encode(f.read()).decode('utf-8')
+    
+    with open("/home/izzahalfatih/belajar/image-llm/dataset_bisindo_letters/D/1.png", "rb") as f:
+        b64_str_d = base64.b64encode(f.read()).decode('utf-8')
 
     client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -76,6 +84,10 @@ def send_to_openai(image_path: str, model: str, kshot=True) -> str:
             model = model,
             store = False,
             input = [
+                {
+                    "role":"system",
+                    "content": system_prompt
+                },
                 {
                     "role":"user",
                     "content": [
@@ -127,6 +139,21 @@ def send_to_openai(image_path: str, model: str, kshot=True) -> str:
                         { "type": "input_text", "text": prompt },
                         {
                             "type": "input_image",
+                            "image_url": f"data:image/png;base64,{b64_str_d}",
+                            "detail": "low"
+                        },
+                    ],
+                },
+                {
+                    "role":"assistant",
+                    "content": "D"
+                },
+                {
+                    "role":"user",
+                    "content": [
+                        { "type": "input_text", "text": prompt },
+                        {
+                            "type": "input_image",
                             "image_url": f"data:image/png;base64,{b64_str}",
                             "detail": "low"
                         },
@@ -139,6 +166,10 @@ def send_to_openai(image_path: str, model: str, kshot=True) -> str:
             model = model,
             store = False,
             input = [
+                {
+                    "role":"system",
+                    "content": system_prompt
+                },
                 {
                     "role":"user",
                     "content": [
