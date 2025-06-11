@@ -56,29 +56,102 @@ def gather_image_paths(image_folder: str) -> list:
                 img_paths.append(os.path.join(root, file))
     return img_paths
 
-def send_to_openai(image_path: str, model: str) -> str:
+def send_to_openai(image_path: str, model: str, kshot=True) -> str:
     with open(image_path, "rb") as f:
         b64_str = base64.b64encode(f.read()).decode('utf-8')
+    
+    with open("/home/izzahalfatih/belajar/image-llm/dataset_bisindo_letters/A/1.png", "rb") as f:
+        b64_str_a = base64.b64encode(f.read()).decode('utf-8')
+
+    with open("/home/izzahalfatih/belajar/image-llm/dataset_bisindo_letters/B/1.png", "rb") as f:
+        b64_str_b = base64.b64encode(f.read()).decode('utf-8')
+    
+    with open("/home/izzahalfatih/belajar/image-llm/dataset_bisindo_letters/C/1.png", "rb") as f:
+        b64_str_c = base64.b64encode(f.read()).decode('utf-8')
 
     client = OpenAI(api_key=OPENAI_API_KEY)
 
-    response = client.responses.create(
-        model = model,
-        store = False,
-        input = [
-            {
-                "role":"user",
-                "content": [
-                    { "type": "input_text", "text": prompt },
-                    {
-                        "type": "input_image",
-                        "image_url": f"data:image/png;base64,{b64_str}",
-                        "detail": "low"
-                    },
-                ],
-            }
-        ],
-    )
+    if kshot:
+        response = client.responses.create(
+            model = model,
+            store = False,
+            input = [
+                {
+                    "role":"user",
+                    "content": [
+                        { "type": "input_text", "text": prompt },
+                        {
+                            "type": "input_image",
+                            "image_url": f"data:image/png;base64,{b64_str_a}",
+                            "detail": "low"
+                        },
+                    ],
+                },
+                {
+                    "role":"assistant",
+                    "content": "A"
+                },
+                {
+                    "role":"user",
+                    "content": [
+                        { "type": "input_text", "text": prompt },
+                        {
+                            "type": "input_image",
+                            "image_url": f"data:image/png;base64,{b64_str_b}",
+                            "detail": "low"
+                        },
+                    ],
+                },
+                {
+                    "role":"assistant",
+                    "content": "B"
+                },
+                {
+                    "role":"user",
+                    "content": [
+                        { "type": "input_text", "text": prompt },
+                        {
+                            "type": "input_image",
+                            "image_url": f"data:image/png;base64,{b64_str_c}",
+                            "detail": "low"
+                        },
+                    ],
+                },
+                {
+                    "role":"assistant",
+                    "content": "C"
+                },
+                {
+                    "role":"user",
+                    "content": [
+                        { "type": "input_text", "text": prompt },
+                        {
+                            "type": "input_image",
+                            "image_url": f"data:image/png;base64,{b64_str}",
+                            "detail": "low"
+                        },
+                    ],
+                },
+            ],
+        )
+    else:
+        response = client.responses.create(
+            model = model,
+            store = False,
+            input = [
+                {
+                    "role":"user",
+                    "content": [
+                        { "type": "input_text", "text": prompt },
+                        {
+                            "type": "input_image",
+                            "image_url": f"data:image/png;base64,{b64_str}",
+                            "detail": "low"
+                        },
+                    ],
+                }
+            ],
+        )
 
     prediction = response.output_text
     input_tokens = response.usage.input_tokens
